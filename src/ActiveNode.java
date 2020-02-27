@@ -28,7 +28,12 @@ public class ActiveNode extends Thread {
     	
   }
     public void sendMessage(String message) {
-       
+       try {
+    	   serverThreadThreads.forEach(t->t.getPrintWriter().println(message)); 	   
+       }
+       catch(Exception e) {
+    	   e.printStackTrace();
+       }
     	
     }
     public Set<ActiveNodeWorker> getServerThreadThreads(){
