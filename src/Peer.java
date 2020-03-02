@@ -10,8 +10,7 @@ public class Peer {
 	public static void main(String args[]) throws Exception {
 		Scanner sc = new Scanner(System.in);
 		char input;
-		 String LogicalName;
-		int portno; 
+		Node_Info node = new Node_Info();
 		System.out.println("Choose one of the following operations to perform :\n"
 				+ " J - JOIN \n M - SENDMESSAGE \n L - LEAVE\n");
 		input = sc.next().charAt(0);
@@ -19,17 +18,19 @@ public class Peer {
 			System.out.println( "for join");
        BufferedReader buf_reader = new BufferedReader(new InputStreamReader(System.in));
          System.out.println("Enter logical name");
-         LogicalName = buf_reader.readLine();
+         node.LogicalName = buf_reader.readLine();
 			System.out.println("Enter portno to be connected");
-		portno = Integer.parseInt(buf_reader.readLine());
+		node.portno = Integer.parseInt(buf_reader.readLine());
 	        //active_Node.Join(node_info.LogicalName,node_info.portno);
-         ActiveNode active_Node = new ActiveNode(portno);
+         ActiveNode active_Node = new ActiveNode(node.portno);
          active_Node.start();
-         new Peer().updateListentoPeers(buf_reader,LogicalName,active_Node);
+         node.hasPredecessor = 0;
+         node.hasSucessor = 0;
+         new Peer().updateListentoPeers(buf_reader,node.LogicalName,active_Node,node);
 		}
 		sc.close();
 }
-	public void updateListentoPeers(BufferedReader buf_reader,String username,ActiveNode active_Node) throws  Exception{
+	public void updateListentoPeers(BufferedReader buf_reader,String username,ActiveNode active_Node,Node_Info node) throws  Exception{
 		System.out.println("Enter hostname and port");
 		//System.out.println("Peers to receive messages from (s to skip)");
 		String inputs = buf_reader.readLine();
@@ -38,20 +39,39 @@ public class Peer {
 			for(int i = 0 ; i < inputvalues.length; i++) {
 				String[] address = inputvalues[i].split(":");
 				System.out.println("address" + address[1]);
-		        Socket socket = null;
+		        Socket Predecessor_node = null;
+		        Socket Sucessor_node = null;
 		        try {
-		        	socket = new Socket(address[0],Integer.valueOf(address[1]));
-		        	new ChatNode(socket).start();
+		        	if(node.hasPredecessor == 0) {
+		        	Node_Info Predecessor = new Node_Info();
+		        	Predecessor.portno = Integer.valueOf(address[1]);
+		        	Predecessor.LogicalName = address[0];
+		        	Predecessor_node = new Socket(address[0],Integer.valueOf(address[1]));
+		        		new ChatNode(Predecessor_node).start();
+		        	}
+		        	else if(node.hasSucessor == 0)  {
+		        		Node_Info Sucessor = new Node_Info();
+		        		Sucessor.portno = Integer.valueOf(address[1]);
+		        		Sucessor.LogicalName = address[0];
+		        		Sucessor_node = new Socket(address[0],Integer.valueOf(address[1]));
+			        		new ChatNode(Sucessor_node).start();
+		        	
+		        	}
+		        	else {
+		        		System.out.print("Node has both Successor and Predecessor can't add more node!!!!");
+		        	}
 		        }
 		        catch(Exception e) {
-		        	if(socket != null) socket.close();
+		        	if(Predecessor_node != null) Predecessor_node.close();
+		        	else System.out.println("Invalid input skip tonext line");
+		        	if(Sucessor_node != null) Sucessor_node.close();
 		        	else System.out.println("Invalid input skip tonext line");
 		        }
 			}
-			Communicate(buf_reader,username,active_Node);
+			Communicate(buf_reader,username,active_Node,node);
 	    
 	}
-	public void Communicate(BufferedReader buf_readere,String username,ActiveNode active_Node) throws Exception{
+	public void Communicate(BufferedReader buf_readere,String username,ActiveNode active_Node,Node_Info node) throws Exception{
 		
 		try {
 			System.out.println("> u can communicate[e exit, c change]");
@@ -63,7 +83,7 @@ public class Peer {
 					break;
 				}
 				else if(message.equals("c")) {
-					updateListentoPeers(buf_readere,username,active_Node);
+					updateListentoPeers(buf_readere,username,active_Node,node);
 					}
 				else {
 					StringWriter stringwriter = new StringWriter();

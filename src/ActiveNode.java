@@ -11,7 +11,6 @@ public class ActiveNode extends Thread {
     public ActiveNode() {}
     public ActiveNode(int portno) throws IOException{
     	serversocket = new ServerSocket(portno);
-    	
     }
     public void run() {
     	try {
